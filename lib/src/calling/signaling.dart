@@ -300,15 +300,14 @@ class Signaling {
             "uris": ["turn:127.0.0.1:19302?transport=udp"]
           }
         */
-        _iceServers = {
-          'iceServers': [
-            {
-              'url': _turnCredential['uris'][0],
-              'username': _turnCredential['username'],
-              'credential': _turnCredential['password']
-            },
-          ]
-        };
+         _iceServers = {
+      'iceServers': [
+         {
+            'url': 'turn:YOUR_TURN_SERVER_ADDRESS:3478',
+            'username':YOUR_COTURN_USERNAME,
+            'credential': YOUR_COTURN_PASSWORD
+         },
+      
       } catch (e) {}
     }
 
