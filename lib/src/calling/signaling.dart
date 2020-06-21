@@ -306,11 +306,11 @@ class Signaling {
             'url': 'turn:YOUR_TURN_SERVER_ADDRESS:3478',
             'username':YOUR_COTURN_USERNAME,
             'credential': YOUR_COTURN_PASSWORD
-         },
-      
-      } catch (e) {}
+         },  ]
+                } ;
+        }catch (e) {}
     }
-
+  
     _socket.onOpen = () {
       print('onOpen');
       this?.onStateChange(SignalingState.ConnectionOpen);
