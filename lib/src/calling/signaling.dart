@@ -8,8 +8,7 @@ import '../utils/device_info.dart'
     if (dart.library.js) '../utils/device_info_web.dart';
 import '../utils/websocket.dart'
     if (dart.library.js) '../utils/websocket_web.dart';
-import '../utils/turn.dart'
-    if (dart.library.js) '../utils/turn_web.dart';
+import '../utils/turn.dart' if (dart.library.js) '../utils/turn_web.dart';
 
 enum SignalingState {
   CallStateNew,
@@ -55,7 +54,7 @@ class Signaling {
   DataChannelMessageCallback onDataChannelMessage;
   DataChannelCallback onDataChannel;
 
-  Map<String, dynamic> _iceServers = {
+   Map<String, dynamic> _iceServers = {
     'iceServers': [
       {'url': 'stun:stun.l.google.com:19302'},
       /*
@@ -69,6 +68,7 @@ class Signaling {
     ]
   };
 
+
   final Map<String, dynamic> _config = {
     'mandatory': {},
     'optional': [
@@ -76,7 +76,7 @@ class Signaling {
     ],
   };
   //omar
-  final Map<String, dynamic> _audio_constraint={
+  final Map<String, dynamic> _audio_constraint = {
     'mandatory': {
       'OfferToReceiveAudio': true,
       'OfferToReceiveVideo': false,
@@ -110,7 +110,7 @@ class Signaling {
     _peerConnections.forEach((key, pc) {
       pc.close();
     });
-    if (_socket != null) _socket.close();
+     if (_socket != null) _socket.close();
   }
 
   void switchCamera() {
@@ -118,19 +118,19 @@ class Signaling {
       _localStream.getVideoTracks()[0].switchCamera();
     }
   }
+
   //////
   void microphoneMute(bool mute) {
     if (_localStream != null) {
       _localStream.getAudioTracks()[0].setMicrophoneMute(mute);
-      
-      
     }
   }
-  void speakerPhone(bool enable){
-      if (_localStream != null)
-    _localStream.getAudioTracks()[0].enableSpeakerphone(enable);
-        
+
+  void speakerPhone(bool enable) {
+    if (_localStream != null)
+      _localStream.getAudioTracks()[0].enableSpeakerphone(enable);
   }
+
 ///////
   void invite(String peer_id, String media) {
     this._sessionId = this._selfId + '-' + peer_id;
@@ -153,7 +153,6 @@ class Signaling {
       'session_id': this._sessionId,
       'from': this._selfId,
     });
-
   }
 
   void onMessage(message) async {
@@ -286,7 +285,7 @@ class Signaling {
 
   void connect() async {
     var url = 'https://$_host:$_port/ws';
-    _socket = SimpleWebSocket(url);
+     _socket = SimpleWebSocket(url);
 
     print('connect to $url');
 
@@ -300,17 +299,30 @@ class Signaling {
             "uris": ["turn:127.0.0.1:19302?transport=udp"]
           }
         */
+        //////////////////////////////////////////////////////////////////////////
+        /*
+          _iceServers = {
+          'iceServers': [
+            {
+              'url': 'turn:numb.viagenie.ca',
+              'credential': 'muazkh',
+              'username': 'webrtc@live.com'
+            },
+          ]
+        };
+        */
          _iceServers = {
-      'iceServers': [
-         {
-            'url': 'turn:YOUR_TURN_SERVER_ADDRESS:3478',
-            'username':YOUR_COTURN_USERNAME,
-            'credential': YOUR_COTURN_PASSWORD
-         },  ]
-                } ;
-        }catch (e) {}
+          'iceServers': [
+            {
+              'url': _turnCredential['uris'][0],
+              'username': _turnCredential['username'],
+              'credential': _turnCredential['password']
+            },
+          ]
+        };
+      } catch (e) {}
     }
-  
+
     _socket.onOpen = () {
       print('onOpen');
       this?.onStateChange(SignalingState.ConnectionOpen);
@@ -340,7 +352,7 @@ class Signaling {
   Future<MediaStream> createStream(media) async {
     final Map<String, dynamic> mediaConstraintsAudio = {
       'audio': true,
-      'video':false
+      'video': false
     };
 //  final Map<String, dynamic> mediaConstraintsVideo = {
 //       'audio': true,
@@ -356,7 +368,7 @@ class Signaling {
 //       }
 //     };
 // var mediaConstraints= media=='audio'?mediaConstraintsAudio:mediaConstraintsVideo;
-    MediaStream stream =await navigator.getUserMedia(mediaConstraintsAudio);
+    MediaStream stream = await navigator.getUserMedia(mediaConstraintsAudio);
     if (this.onLocalStream != null) {
       this.onLocalStream(stream);
     }
@@ -435,7 +447,6 @@ class Signaling {
   }
 
   _createAnswer(String id, RTCPeerConnection pc, media) async {
-    
     try {
       RTCSessionDescription s = await pc.createAnswer(_audio_constraint);
       pc.setLocalDescription(s);
