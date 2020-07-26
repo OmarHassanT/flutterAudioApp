@@ -187,6 +187,16 @@ class Signaling {
           _peerConnections[id] = pc;
           await pc.setRemoteDescription(new RTCSessionDescription(
               description['sdp'], description['type']));
+              /////////////////
+              ///
+              ///
+            //   print("*******************>");
+            //   print(   description['sdp']);
+
+            //  print( description['type']);
+            //  print("*******************<");
+
+             //////////////////
           await _createAnswer(id, pc, media);
           if (this._remoteCandidates.length > 0) {
             _remoteCandidates.forEach((candidate) async {
@@ -291,7 +301,7 @@ class Signaling {
 
     if (_turnCredential == null) {
       try {
-        _turnCredential = await getTurnCredential(_host, _port);
+        // _turnCredential = await getTurnCredential(_host, _port);
         /*{
             "username": "1584195784:mbzrxpgjys",
             "password": "isyl6FF6nqMTB9/ig5MrMRUXqZg",
@@ -300,7 +310,7 @@ class Signaling {
           }
         */
         //////////////////////////////////////////////////////////////////////////
-        /*
+        
           _iceServers = {
           'iceServers': [
             {
@@ -310,19 +320,25 @@ class Signaling {
             },
           ]
         };
-        */
-         _iceServers = {
-          'iceServers': [
-            {
-              'url': _turnCredential['uris'][0],
-              'username': _turnCredential['username'],
-              'credential': _turnCredential['password']
-            },
-          ]
-        };
+        
+        //  _iceServers = {
+        //   'iceServers': [
+        //     {
+        //       'url': _turnCredential['uris'][0],
+        //       'username': _turnCredential['username'],
+        //       'credential': _turnCredential['password']
+        //     },
+        //   ]
+        // };
       } catch (e) {}
     }
 
+      // // this.onStateChange(SignalingState.ConnectionOpen);
+      // _send('new', {
+      //   'name': DeviceInfo.label,
+      //   'id': _selfId,
+      //   'user_agent': DeviceInfo.userAgent
+      // });
     _socket.onOpen = () {
       print('onOpen');
       this?.onStateChange(SignalingState.ConnectionOpen);
@@ -463,9 +479,13 @@ class Signaling {
   }
 
   _send(event, data) {
-    var request = new Map();
+    Map<String, dynamic> request = new Map();
     request["type"] = event;
     request["data"] = data;
-    _socket.send(_encoder.convert(request));
+    // print("------------------------------>");
+    // print(request);
+    //  print("------------------------------<");
+    //  this.onMessage(request);
+     _socket.send(_encoder.convert(request));
   }
 }
