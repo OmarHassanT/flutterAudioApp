@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'dart:core';
 import 'signaling.dart';
 import 'package:flutter_webrtc/webrtc.dart';
+import 'random_string.dart';
 
 class CallSample extends StatefulWidget {
   static String tag = 'call_sample';
@@ -16,7 +17,7 @@ class CallSample extends StatefulWidget {
 
 class _CallSampleState extends State<CallSample> {
   Signaling _signaling;
-  var _selfId = "loading...";
+  String _selfId = randomNumeric(6);
   var _peerId = "";
   RTCVideoRenderer _localRenderer = RTCVideoRenderer();
   RTCVideoRenderer _remoteRenderer = RTCVideoRenderer();
@@ -53,7 +54,7 @@ class _CallSampleState extends State<CallSample> {
 
   void _connect() async {
     if (_signaling == null) {
-      _signaling = Signaling(serverIP)..connect();
+      _signaling = Signaling(_selfId)..connect();
 
       _signaling.onStateChange = (SignalingState state) {
         switch (state) {

@@ -29,6 +29,7 @@ dependencies:
   # Use with the CupertinoIcons class for iOS style icons.
   cupertino_icons: ^0.1.3
   flutter_webrtc: ^0.2.6
+  hasura_connect: ^1.2.2+1
   shared_preferences:
   http: ^0.12.0+4
 

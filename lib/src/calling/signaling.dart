@@ -9,6 +9,7 @@ import '../utils/device_info.dart'
 import '../utils/websocket.dart'
     if (dart.library.js) '../utils/websocket_web.dart';
 import '../utils/turn.dart' if (dart.library.js) '../utils/turn_web.dart';
+import 'package:hasura_connect/hasura_connect.dart';
 
 enum SignalingState {
   CallStateNew,
@@ -34,7 +35,7 @@ typedef void DataChannelCallback(RTCDataChannel dc);
 class Signaling {
   JsonEncoder _encoder = new JsonEncoder();
   JsonDecoder _decoder = new JsonDecoder();
-  String _selfId = randomNumeric(6);
+  String _selfId;
   SimpleWebSocket _socket;
   var _sessionId;
   var _host;
@@ -53,6 +54,10 @@ class Signaling {
   OtherEventCallback onPeersUpdate;
   DataChannelMessageCallback onDataChannelMessage;
   DataChannelCallback onDataChannel;
+
+ static  String url = 'http://35.224.121.33:5021/v1/graphql';
+HasuraConnect hasuraConnect = HasuraConnect(url);
+
 
    Map<String, dynamic> _iceServers = {
     'iceServers': [
@@ -99,7 +104,7 @@ class Signaling {
   //   'optional': [],
   // };
 
-  Signaling(this._host);
+  Signaling(this._selfId);
 
   close() {
     if (_localStream != null) {
@@ -294,10 +299,10 @@ class Signaling {
   }
 
   void connect() async {
-    var url = 'https://$_host:$_port/ws';
-     _socket = SimpleWebSocket(url);
+    // var url = 'https://$_host:$_port/ws';
+    //  _socket = SimpleWebSocket(url);
 
-    print('connect to $url');
+    // print('connect to $url');
 
     if (_turnCredential == null) {
       try {
@@ -339,30 +344,51 @@ class Signaling {
       //   'id': _selfId,
       //   'user_agent': DeviceInfo.userAgent
       // });
-    _socket.onOpen = () {
-      print('onOpen');
-      this?.onStateChange(SignalingState.ConnectionOpen);
-      _send('new', {
-        'name': DeviceInfo.label,
-        'id': _selfId,
-        'user_agent': DeviceInfo.userAgent
-      });
-    };
+    // _socket.onOpen = () {
+    //   print('onOpen');
+    //   this?.onStateChange(SignalingState.ConnectionOpen);
+    //   _send('new', {
+    //     'name': DeviceInfo.label,
+    //     'id': _selfId,
+    //     'user_agent': DeviceInfo.userAgent
+    //   });
+    // };
 
-    _socket.onMessage = (message) {
-      print('Recivied data: ' + message);
-      JsonDecoder decoder = new JsonDecoder();
-      this.onMessage(decoder.convert(message));
-    };
+    // _socket.onMessage = (message) {
+    //   print('Recivied data: ' + message);
+    //   JsonDecoder decoder = new JsonDecoder();
+    //   this.onMessage(decoder.convert(message));
+    // };
 
-    _socket.onClose = (int code, String reason) {
-      print('Closed by server [$code => $reason]!');
-      if (this.onStateChange != null) {
-        this.onStateChange(SignalingState.ConnectionClosed);
-      }
-    };
+    // _socket.onClose = (int code, String reason) {
+    //   print('Closed by server [$code => $reason]!');
+    //   if (this.onStateChange != null) {
+    //     this.onStateChange(SignalingState.ConnectionClosed);
+    //   }
+    // };
 
-    await _socket.connect();
+    // await _socket.connect();
+String docQuery = r"""
+subscription MySubscription($_selfId:String!) {
+  call(where: {User_id: {_eq:$_selfId}}) {
+    data
+  }
+}
+""";
+Snapshot snapshot = hasuraConnect.subscription(docQuery,variables:{"_selfId": _selfId});
+  snapshot.listen((data) {
+    print("recived data:");
+
+    List<dynamic> dataa = data["data"]["call"];
+    dataa.forEach((element) {
+       print(element["data"]);
+           this.onMessage(element["data"]);
+
+    });
+  }).onError((err) {
+    print(err);
+  });
+    
   }
 
   Future<MediaStream> createStream(media) async {
@@ -478,14 +504,26 @@ class Signaling {
     }
   }
 
-  _send(event, data) {
+  _send(event, data) async {
     Map<String, dynamic> request = new Map();
     request["type"] = event;
     request["data"] = data;
-    // print("------------------------------>");
-    // print(request);
-    //  print("------------------------------<");
-    //  this.onMessage(request);
-     _socket.send(_encoder.convert(request));
+    var reciverID=data["to"];
+  String docQuery = r"""
+
+mutation MyMutation($reciverID:String!,$request:jsonb!) {
+  insert_call(objects: {User_id: $reciverID, data:$request }) {
+    affected_rows
+  }
+}
+
+""";
+     var r=   await  hasuraConnect.mutation(docQuery,variables:{
+       "reciverID":reciverID,
+       "request":request
+     } );
+     print("send data:");
+    print(r);
+    //  _socket.send(_encoder.convert(request));
   }
 }
