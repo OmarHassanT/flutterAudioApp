@@ -109,8 +109,15 @@ class _CallSampleState extends State<CallSample> {
 
   _hangUp() {
     if (_signaling != null) {
-      _signaling.bye();
-    }
+      _signaling.close();
+       this.setState(() {
+              _localRenderer.srcObject = null;
+              _remoteRenderer.srcObject = null;
+              _inCalling = false;
+            });
+                }
+
+      _signaling.bye(_peerId);
   }
 
   _muteMic(mute) {
@@ -142,7 +149,9 @@ class _CallSampleState extends State<CallSample> {
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: <Widget>[
                       FloatingActionButton(
-                        onPressed: _hangUp,
+                        onPressed:(){
+                           _hangUp();
+                        },
                         tooltip: 'Hangup',
                         child: Icon(Icons.call_end),
                         backgroundColor: Colors.pink,
