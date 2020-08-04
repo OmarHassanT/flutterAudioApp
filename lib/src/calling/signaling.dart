@@ -36,7 +36,7 @@ class Signaling {
   JsonEncoder _encoder = new JsonEncoder();
   JsonDecoder _decoder = new JsonDecoder();
   String _selfId;
-  SimpleWebSocket _socket;
+  // SimpleWebSocket _socket;
   var _sessionId;
   var _host;
   var _port = 8086;
@@ -115,7 +115,7 @@ HasuraConnect hasuraConnect = HasuraConnect(url);
     _peerConnections.forEach((key, pc) {
       pc.close();
     });
-     if (_socket != null) _socket.close();
+    //  if (_socket != null) _socket.close();
   }
 
   void switchCamera() {
@@ -153,10 +153,12 @@ HasuraConnect hasuraConnect = HasuraConnect(url);
     });
   }
 
-  void bye() {
+  void bye(id) {
     _send('bye', {
       'session_id': this._sessionId,
       'from': this._selfId,
+      'to': id,
+
     });
   }
 
@@ -165,17 +167,17 @@ HasuraConnect hasuraConnect = HasuraConnect(url);
     var data = mapData['data'];
 
     switch (mapData['type']) {
-      case 'peers':
-        {
-          List<dynamic> peers = data;
-          if (this.onPeersUpdate != null) {
-            Map<String, dynamic> event = new Map<String, dynamic>();
-            event['self'] = _selfId;
-            event['peers'] = peers;
-            this.onPeersUpdate(event);
-          }
-        }
-        break;
+      // case 'peers':
+      //   {
+      //     List<dynamic> peers = data;
+      //     if (this.onPeersUpdate != null) {
+      //       Map<String, dynamic> event = new Map<String, dynamic>();
+      //       event['self'] = _selfId;
+      //       event['peers'] = peers;
+      //       this.onPeersUpdate(event);
+      //     }
+      //   }
+      //   break;
       case 'offer':
         {
           var id = data['from'];
