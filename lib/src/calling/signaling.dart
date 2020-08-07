@@ -1,14 +1,6 @@
 import 'dart:convert';
 import 'dart:async';
 import 'package:flutter_webrtc/webrtc.dart';
-
-import 'random_string.dart';
-
-import '../utils/device_info.dart'
-    if (dart.library.js) '../utils/device_info_web.dart';
-import '../utils/websocket.dart'
-    if (dart.library.js) '../utils/websocket_web.dart';
-import '../utils/turn.dart' if (dart.library.js) '../utils/turn_web.dart';
 import 'package:hasura_connect/hasura_connect.dart';
 
 enum SignalingState {
@@ -44,7 +36,9 @@ class Signaling {
   var _dataChannels = new Map<String, RTCDataChannel>();
   var _remoteCandidates = [];
   var _turnCredential;
-
+  var description;
+  bool offerPassed=false;
+  var id;
   MediaStream _localStream;
   List<MediaStream> _remoteStreams;
   SignalingStateCallback onStateChange;
@@ -115,6 +109,7 @@ HasuraConnect hasuraConnect = HasuraConnect(url);
     _peerConnections.forEach((key, pc) {
       pc.close();
     });
+    offerPassed=false;
     //  if (_socket != null) _socket.close();
   }
 
@@ -161,6 +156,40 @@ HasuraConnect hasuraConnect = HasuraConnect(url);
 
     });
   }
+accept2(id,String media) async {
+
+          var pc = await _createPeerConnection(id, media);
+          _peerConnections[id] = pc;
+          await pc.setRemoteDescription(new RTCSessionDescription(
+              description['sdp'], description['type']));
+           
+          await _createAnswer(id, pc, media);
+           if (this._remoteCandidates.length > 0) {
+            _remoteCandidates.forEach((candidate) async {
+              await pc.addCandidate(candidate);
+            });
+            _remoteCandidates.clear();
+          }
+}
+accept(String media) {
+    _createPeerConnection(id, media).then((pc) {
+       _peerConnections[id] = pc;
+       pc.setRemoteDescription(new RTCSessionDescription(
+                 description['sdp'], description['type']));
+       _createAnswer(id, pc, media);
+         if (this._remoteCandidates.length > 0) {
+            _remoteCandidates.forEach((candidate) async {
+              await pc.addCandidate(candidate);
+            });
+            _remoteCandidates.clear();
+          }
+   });
+   if (this.onStateChange != null) {
+            this.onStateChange(SignalingState.CallStateRinging);
+
+          }
+
+}
 
   void onMessage(message) async {
     Map<String, dynamic> mapData = message;
@@ -180,37 +209,18 @@ HasuraConnect hasuraConnect = HasuraConnect(url);
       //   break;
       case 'offer':
         {
-          var id = data['from'];
-          var description = data['description'];
+           id = data['from'];
+          description = data['description'];
           var media = data['media'];
           var sessionId = data['session_id'];
           this._sessionId = sessionId;
 
           if (this.onStateChange != null) {
             this.onStateChange(SignalingState.CallStateNew);
+
           }
 
-          var pc = await _createPeerConnection(id, media);
-          _peerConnections[id] = pc;
-          await pc.setRemoteDescription(new RTCSessionDescription(
-              description['sdp'], description['type']));
-              /////////////////
-              ///
-              ///
-            //   print("*******************>");
-            //   print(   description['sdp']);
-
-            //  print( description['type']);
-            //  print("*******************<");
-
-             //////////////////
-          await _createAnswer(id, pc, media);
-          if (this._remoteCandidates.length > 0) {
-            _remoteCandidates.forEach((candidate) async {
-              await pc.addCandidate(candidate);
-            });
-            _remoteCandidates.clear();
-          }
+         
         }
         break;
       case 'answer':
@@ -371,12 +381,14 @@ HasuraConnect hasuraConnect = HasuraConnect(url);
 
     // await _socket.connect();
 String docQuery = r"""
-subscription MySubscription($_selfId:String!) {
-  call(where: {User_id: {_eq:$_selfId}}) {
+subscription MySubscription($_selfId: String!) {
+  call(where: {User_id: {_eq: $_selfId}}) {
     data
   }
 }
+
 """;
+
 Snapshot snapshot = hasuraConnect.subscription(docQuery,variables:{"_selfId": _selfId});
   snapshot.listen((data) {
     print("recived data:");
@@ -384,7 +396,16 @@ Snapshot snapshot = hasuraConnect.subscription(docQuery,variables:{"_selfId": _s
     List<dynamic> dataa = data["data"]["call"];
     dataa.forEach((element) {
        print(element["data"]);
-           this.onMessage(element["data"]);
+      if(element["data"]["type"]=="offer" &&!offerPassed){
+            this.onMessage(element["data"]);
+            offerPassed=true;
+      }
+        else{
+          if(element["data"]["type"]!="offer")  
+             this.onMessage(element["data"]);
+          if(element["data"]["type"]=="bye")
+             offerPassed=false;
+        } 
 
     });
   }).onError((err) {
