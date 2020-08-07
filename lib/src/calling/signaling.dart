@@ -37,7 +37,7 @@ class Signaling {
   var _remoteCandidates = [];
   var _turnCredential;
   var description;
-  bool offerPassed=false;
+  bool offerPassed = false;
   var id;
   MediaStream _localStream;
   List<MediaStream> _remoteStreams;
@@ -49,11 +49,10 @@ class Signaling {
   DataChannelMessageCallback onDataChannelMessage;
   DataChannelCallback onDataChannel;
 
- static  String url = 'http://35.224.121.33:5021/v1/graphql';
-HasuraConnect hasuraConnect = HasuraConnect(url);
+  static String url = 'http://35.224.121.33:5021/v1/graphql';
+  HasuraConnect hasuraConnect = HasuraConnect(url);
 
-
-   Map<String, dynamic> _iceServers = {
+  Map<String, dynamic> _iceServers = {
     'iceServers': [
       {'url': 'stun:stun.l.google.com:19302'},
       /*
@@ -66,7 +65,6 @@ HasuraConnect hasuraConnect = HasuraConnect(url);
        */
     ]
   };
-
 
   final Map<String, dynamic> _config = {
     'mandatory': {},
@@ -109,7 +107,7 @@ HasuraConnect hasuraConnect = HasuraConnect(url);
     _peerConnections.forEach((key, pc) {
       pc.close();
     });
-    offerPassed=false;
+    offerPassed = false;
     //  if (_socket != null) _socket.close();
   }
 
@@ -153,43 +151,48 @@ HasuraConnect hasuraConnect = HasuraConnect(url);
       'session_id': this._sessionId,
       'from': this._selfId,
       'to': id,
-
     });
   }
-accept2(id,String media) async {
 
-          var pc = await _createPeerConnection(id, media);
-          _peerConnections[id] = pc;
-          await pc.setRemoteDescription(new RTCSessionDescription(
-              description['sdp'], description['type']));
-           
-          await _createAnswer(id, pc, media);
-           if (this._remoteCandidates.length > 0) {
-            _remoteCandidates.forEach((candidate) async {
-              await pc.addCandidate(candidate);
-            });
-            _remoteCandidates.clear();
-          }
+  accept2(id, String media) async {
+    var pc = await _createPeerConnection(id, media);
+    _peerConnections[id] = pc;
+    await pc.setRemoteDescription(
+        new RTCSessionDescription(description['sdp'], description['type']));
+
+    await _createAnswer(id, pc, media);
+    if (this._remoteCandidates.length > 0) {
+      _remoteCandidates.forEach((candidate) async {
+        await pc.addCandidate(candidate);
+      });
+      _remoteCandidates.clear();
+    }
+  }
+
+  String updataQuerySetValidFalse = r"""
+      mutation MyMutation2($sessionId:String!) {
+  update_call_signaling(_set: {valid: false}, where: {session_id: {_eq:$sessionId}}) {
+    affected_rows
+  }
 }
-accept(String media) {
+      """;
+  accept(String media) {
     _createPeerConnection(id, media).then((pc) {
-       _peerConnections[id] = pc;
-       pc.setRemoteDescription(new RTCSessionDescription(
-                 description['sdp'], description['type']));
-       _createAnswer(id, pc, media);
-         if (this._remoteCandidates.length > 0) {
-            _remoteCandidates.forEach((candidate) async {
-              await pc.addCandidate(candidate);
-            });
-            _remoteCandidates.clear();
-          }
-   });
-   if (this.onStateChange != null) {
-            this.onStateChange(SignalingState.CallStateRinging);
-
-          }
-
-}
+      _peerConnections[id] = pc;
+      pc.setRemoteDescription(
+          new RTCSessionDescription(description['sdp'], description['type']));
+      _createAnswer(id, pc, media);
+      if (this._remoteCandidates.length > 0) {
+        _remoteCandidates.forEach((candidate) async {
+          await pc.addCandidate(candidate);
+        });
+        _remoteCandidates.clear();
+      }
+    });
+    if (this.onStateChange != null) {
+      this.onStateChange(SignalingState.CallStateRinging);
+    }
+  }
 
   void onMessage(message) async {
     Map<String, dynamic> mapData = message;
@@ -209,7 +212,7 @@ accept(String media) {
       //   break;
       case 'offer':
         {
-           id = data['from'];
+          id = data['from'];
           description = data['description'];
           var media = data['media'];
           var sessionId = data['session_id'];
@@ -217,10 +220,7 @@ accept(String media) {
 
           if (this.onStateChange != null) {
             this.onStateChange(SignalingState.CallStateNew);
-
           }
-
-         
         }
         break;
       case 'answer':
@@ -327,8 +327,8 @@ accept(String media) {
           }
         */
         //////////////////////////////////////////////////////////////////////////
-        
-          _iceServers = {
+
+        _iceServers = {
           'iceServers': [
             {
               'url': 'turn:numb.viagenie.ca',
@@ -337,7 +337,7 @@ accept(String media) {
             },
           ]
         };
-        
+
         //  _iceServers = {
         //   'iceServers': [
         //     {
@@ -350,12 +350,12 @@ accept(String media) {
       } catch (e) {}
     }
 
-      // // this.onStateChange(SignalingState.ConnectionOpen);
-      // _send('new', {
-      //   'name': DeviceInfo.label,
-      //   'id': _selfId,
-      //   'user_agent': DeviceInfo.userAgent
-      // });
+    // // this.onStateChange(SignalingState.ConnectionOpen);
+    // _send('new', {
+    //   'name': DeviceInfo.label,
+    //   'id': _selfId,
+    //   'user_agent': DeviceInfo.userAgent
+    // });
     // _socket.onOpen = () {
     //   print('onOpen');
     //   this?.onStateChange(SignalingState.ConnectionOpen);
@@ -380,38 +380,45 @@ accept(String media) {
     // };
 
     // await _socket.connect();
-String docQuery = r"""
+    String docQuery = r"""
 subscription MySubscription($_selfId: String!) {
-  call(where: {User_id: {_eq: $_selfId}}) {
+   call_signaling(where: {user_id: {_eq: $_selfId}, valid: {_eq: true}}) {
     data
   }
 }
 
 """;
 
-Snapshot snapshot = hasuraConnect.subscription(docQuery,variables:{"_selfId": _selfId});
-  snapshot.listen((data) {
-    print("recived data:");
+    Snapshot snapshot =
+        hasuraConnect.subscription(docQuery, variables: {"_selfId": _selfId});
+    snapshot.listen((data)  {
+      print("recived data:");
 
-    List<dynamic> dataa = data["data"]["call"];
-    dataa.forEach((element) {
-       print(element["data"]);
-      if(element["data"]["type"]=="offer" &&!offerPassed){
+      List<dynamic> dataa = data["data"]["call"];
+      dataa.forEach((element)async {
+        print(element["data"]);
+        if (element["data"]["type"] == "offer" && !offerPassed) {
+          this.onMessage(element["data"]);
+          offerPassed = true;
+
+        } else {
+          if (element["data"]["type"] != "offer")
             this.onMessage(element["data"]);
-            offerPassed=true;
-      }
-        else{
-          if(element["data"]["type"]!="offer")  
-             this.onMessage(element["data"]);
-          if(element["data"]["type"]=="bye")
-             offerPassed=false;
-        } 
 
+          if (element["data"]["type"] == "bye") {
+
+            var r = await hasuraConnect.mutation(updataQuerySetValidFalse,
+                variables: {"sessionId": this._sessionId});
+            print("update data:");
+            print(r);
+            offerPassed = false;
+          }
+
+        }
+      });
+    }).onError((err) {
+      print(err);
     });
-  }).onError((err) {
-    print(err);
-  });
-    
   }
 
   Future<MediaStream> createStream(media) async {
@@ -531,21 +538,29 @@ Snapshot snapshot = hasuraConnect.subscription(docQuery,variables:{"_selfId": _s
     Map<String, dynamic> request = new Map();
     request["type"] = event;
     request["data"] = data;
-    var reciverID=data["to"];
-  String docQuery = r"""
+    var reciverID = data["to"];
 
-mutation MyMutation($reciverID:String!,$request:jsonb!) {
-  insert_call(objects: {User_id: $reciverID, data:$request }) {
+    if (event == "bye") {
+      var r = await hasuraConnect.mutation(updataQuerySetValidFalse,
+          variables: {"sessionId": data["session_id"]});
+      print("update data:");
+      print(r);
+    }
+    String docQuery = r"""
+
+mutation MyMutation($reciverID:String!,$request:jsonb!,$sessionId:String!) {
+  insert_call_signaling(objects: {User_id: $reciverID, data:$request,session_id:$sessionId }) {
     affected_rows
   }
 }
 
 """;
-     var r=   await  hasuraConnect.mutation(docQuery,variables:{
-       "reciverID":reciverID,
-       "request":request
-     } );
-     print("send data:");
+    var r = await hasuraConnect.mutation(docQuery, variables: {
+      "reciverID": reciverID,
+      "request": request,
+      "sessionId": data["session_id"]
+    });
+    print("send data:");
     print(r);
     //  _socket.send(_encoder.convert(request));
   }
