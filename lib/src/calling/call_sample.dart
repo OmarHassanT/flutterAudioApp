@@ -51,7 +51,6 @@ class _CallSampleState extends State<CallSample> {
     _localRenderer.dispose();
     _remoteRenderer.dispose();
   }
-
   void _connect() async {
     if (_signaling == null) {
       _signaling = Signaling(_selfId)..connect();
@@ -59,9 +58,9 @@ class _CallSampleState extends State<CallSample> {
       _signaling.onStateChange = (SignalingState state) {
         switch (state) {
           case SignalingState.CallStateNew:
-            this.setState(() {
-              _inCalling = true;
-            });
+                         this._showMyDialog();
+
+            
             break;
           case SignalingState.CallStateBye:
             this.setState(() {
@@ -73,7 +72,13 @@ class _CallSampleState extends State<CallSample> {
           case SignalingState
               .CallStateInvite: ///////////////////cases of ringing
           case SignalingState.CallStateConnected:
+          break;
           case SignalingState.CallStateRinging:
+          this.setState(() {
+              _inCalling = true;
+            });
+         
+          break;
           case SignalingState.ConnectionClosed:
           case SignalingState.ConnectionError:
           case SignalingState.ConnectionOpen:
@@ -101,8 +106,38 @@ class _CallSampleState extends State<CallSample> {
     }
   }
 
+Future<void> _showMyDialog() async {
+  return showDialog<void>(
+    context: context,
+    //  barrierDismissible: false, // user must tap button!
+    builder: (BuildContext context) {
+      return AlertDialog(
+        title: Text('caming call'),
+        content: SingleChildScrollView(
+          child:Text('accept this call?'),
+
+        ),
+        actions: <Widget>[
+          FlatButton(
+            child: Text('Yes'),
+            onPressed: () {
+              _signaling.accept("audio");
+              Navigator.of(context).pop();
+            },
+          ),
+           FlatButton(
+            child: Text('No'),
+            onPressed: () {
+              Navigator.of(context).pop();
+            },
+          ),
+        ],
+      );
+    },
+  );
+}
   _invitePeer(context, peerId, media) async {
-    if (_signaling != null && peerId != _selfId) {
+    if (_signaling != null && peerId != _selfId && peerId!=null) {
       _signaling.invite(peerId, media);
     }
   }
@@ -176,7 +211,8 @@ class _CallSampleState extends State<CallSample> {
                           });
                           _speakerEnable(isSpeaker);
                         },
-                      )
+                      ),
+                       
                     ]))
             : null,
         body: _inCalling
