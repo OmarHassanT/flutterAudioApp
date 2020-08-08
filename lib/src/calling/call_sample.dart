@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:videoAppFluuter/src/calling/webrtc_client.dart';
 import 'dart:core';
 import 'signaling.dart';
 import 'package:flutter_webrtc/webrtc.dart';
@@ -12,162 +13,134 @@ class CallSample extends StatefulWidget {
   CallSample({Key key, @required this.ip}) : super(key: key);
 
   @override
-  _CallSampleState createState() => _CallSampleState(serverIP: ip);
+  _CallSampleState createState() => _CallSampleState();
 }
 
 class _CallSampleState extends State<CallSample> {
-  Signaling _signaling;
-  String _selfId = randomNumeric(6);
-  var _peerId = "";
-  RTCVideoRenderer _localRenderer = RTCVideoRenderer();
-  RTCVideoRenderer _remoteRenderer = RTCVideoRenderer();
+  // Signaling _signaling;
+  String _selfId = "1";
+  String _peerId = "2";
+   String channelId="123";
+  // RTCVideoRenderer _localRenderer = RTCVideoRenderer();
+  // RTCVideoRenderer _remoteRenderer = RTCVideoRenderer();
   
   String media;
   bool _inCalling = false;
   bool isSpeaker = true;
   bool mute = false;
-  final String serverIP;
+  WebRtcClient _webRtcClient;
+  // final String serverIP;
 
-  _CallSampleState({Key key, @required this.serverIP});
+  _CallSampleState({Key key});
 
   @override
   initState() {
     super.initState();
-    initRenderers();
-    _connect();
+       _webRtcClient = WebRtcClient(channelId, peerId: _peerId, selfId: _selfId);
+
+    // initRenderers();
+    // _connect();
 
   }
 
-  initRenderers() async {
-    await _localRenderer.initialize();
-    await _remoteRenderer.initialize();
+  // initRenderers() async {
+  //   await _localRenderer.initialize();
+  //   await _remoteRenderer.initialize();
 
-  }
+  // }
 
   @override
   deactivate() {
     super.deactivate();
-    if (_signaling != null) _signaling.close();
-    _localRenderer.dispose();
-    _remoteRenderer.dispose();
+    // if (_signaling != null) _signaling.close();
+    // _localRenderer.dispose();
+    // _remoteRenderer.dispose();
   }
-  void _connect() async {
-    if (_signaling == null) {
-      _signaling = Signaling(_selfId)..connect();
+  // void _connect() async {
+  //   if (_signaling == null) {
+  //     _signaling = Signaling(_selfId)..connect();
 
-      _signaling.onStateChange = (SignalingState state) {
-        switch (state) {
-          case SignalingState.CallStateNew:
-                         this._showMyDialog();
-
-            
-            break;
-          case SignalingState.CallStateBye:
-            this.setState(() {
-              _localRenderer.srcObject = null;
-              _remoteRenderer.srcObject = null;
-              _inCalling = false;
-            });
-            break;
-          case SignalingState
-              .CallStateInvite: ///////////////////cases of ringing
-          case SignalingState.CallStateConnected:
-          break;
-          case SignalingState.CallStateRinging:
-          this.setState(() {
-              _inCalling = true;
-            });
+  //     _signaling.onStateChange = (SignalingState state) {
+  //       switch (state) {
+  //         case SignalingState.CallStateNew:
+  //           this.setState(() {
+  //             _inCalling = true;
+  //           });
          
-          break;
-          case SignalingState.ConnectionClosed:
-          case SignalingState.ConnectionError:
-          case SignalingState.ConnectionOpen:
-            break;
-        }
-      };
+            
+  //           break;
+  //         case SignalingState.CallStateBye:
+  //           this.setState(() {
+  //             _localRenderer.srcObject = null;
+  //             _remoteRenderer.srcObject = null;
+  //             _inCalling = false;
+  //           });
+  //           break;
+  //         case SignalingState
+  //             .CallStateInvite: ///////////////////cases of ringing
+  //         case SignalingState.CallStateConnected:
+  //         break;
+  //         case SignalingState.CallStateRinging:
+        
+  //         break;
+  //         case SignalingState.ConnectionClosed:
+  //         case SignalingState.ConnectionError:
+  //         case SignalingState.ConnectionOpen:
+  //           break;
+  //       }
+  //     };
 
-      _signaling.onPeersUpdate = ((event) {
-        this.setState(() {
-          _selfId = event['self'];
-        });
-      });
+  //     _signaling.onPeersUpdate = ((event) {
+  //       this.setState(() {
+  //         _selfId = event['self'];
+  //       });
+  //     });
 
-      _signaling.onLocalStream = ((stream) {
-        _localRenderer.srcObject = stream;
-      });
+  //     _signaling.onLocalStream = ((stream) {
+  //       _localRenderer.srcObject = stream;
+  //     });
 
-      _signaling.onAddRemoteStream = ((stream) {
-        _remoteRenderer.srcObject = stream;
-      });
+  //     _signaling.onAddRemoteStream = ((stream) {
+  //       _remoteRenderer.srcObject = stream;
+  //     });
 
-      _signaling.onRemoveRemoteStream = ((stream) {
-        _remoteRenderer.srcObject = null;
-      });
-    }
-  }
+  //     _signaling.onRemoveRemoteStream = ((stream) {
+  //       _remoteRenderer.srcObject = null;
+  //     });
+  //   }
+  // }
+  // _invitePeer(context, peerId, media) async {
+  //   if (_signaling != null && peerId != _selfId && peerId!=null) {
+  //     _signaling.invite(peerId, media);
+  //   }
+  // }
 
-Future<void> _showMyDialog() async {
-  return showDialog<void>(
-    context: context,
-    //  barrierDismissible: false, // user must tap button!
-    builder: (BuildContext context) {
-      return AlertDialog(
-        title: Text('caming call'),
-        content: SingleChildScrollView(
-          child:Text('accept this call?'),
+  // _hangUp() {
+  //   if (_signaling != null) {
+  //     _signaling.close();
+  //      this.setState(() {
+  //             _localRenderer.srcObject = null;
+  //             _remoteRenderer.srcObject = null;
+  //             _inCalling = false;
+  //           });
+  //               }
 
-        ),
-        actions: <Widget>[
-          FlatButton(
-            child: Text('Yes'),
-            onPressed: () {
-              _signaling.accept("audio");
-              Navigator.of(context).pop();
-            },
-          ),
-           FlatButton(
-            child: Text('No'),
-            onPressed: () {
-              Navigator.of(context).pop();
-            },
-          ),
-        ],
-      );
-    },
-  );
-}
-  _invitePeer(context, peerId, media) async {
-    if (_signaling != null && peerId != _selfId && peerId!=null) {
-      _signaling.invite(peerId, media);
-    }
-  }
+  //     _signaling.bye(_peerId);
+  // }
 
-  _hangUp() {
-    if (_signaling != null) {
-      _signaling.close();
-       this.setState(() {
-              _localRenderer.srcObject = null;
-              _remoteRenderer.srcObject = null;
-              _inCalling = false;
-            });
-                }
+  // _muteMic(mute) {
+  //   _signaling.microphoneMute(mute);
+  // }
 
-      _signaling.bye(_peerId);
-  }
-
-  _muteMic(mute) {
-    _signaling.microphoneMute(mute);
-  }
-
-  _speakerEnable(speakerEnable) {
-    _signaling.speakerPhone(speakerEnable);
-  }
+  // _speakerEnable(speakerEnable) {
+  //   _signaling.speakerPhone(speakerEnable);
+  // }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
         appBar: AppBar(
-          title: Text('Id:$_selfId'),
+          title: Text('Id:$channelId  ss $_selfId'),
           actions: <Widget>[
             IconButton(
               icon: const Icon(Icons.settings),
@@ -185,7 +158,7 @@ Future<void> _showMyDialog() async {
                     children: <Widget>[
                       FloatingActionButton(
                         onPressed:(){
-                           _hangUp();
+                           _webRtcClient.leave();
                         },
                         tooltip: 'Hangup',
                         child: Icon(Icons.call_end),
@@ -194,10 +167,11 @@ Future<void> _showMyDialog() async {
                       FloatingActionButton(
                         child: Icon(mute ? Icons.mic_off : Icons.mic),
                         onPressed: () {
+                           _webRtcClient.toggleMic(mute);
                           setState(() {
                             mute = !mute;
                           });
-                          _muteMic(mute);
+                         
                         },
                       ),
                       FloatingActionButton(
@@ -205,11 +179,10 @@ Future<void> _showMyDialog() async {
                             isSpeaker ? Icons.volume_up : Icons.volume_down),
                         tooltip: 'Speaker',
                         onPressed: () {
+                       _webRtcClient.toggleSpeaker(isSpeaker);
                           setState(() {
                             isSpeaker = !isSpeaker;
-                            // print()
                           });
-                          _speakerEnable(isSpeaker);
                         },
                       ),
                        
@@ -230,22 +203,66 @@ Future<void> _showMyDialog() async {
                       TextField(
                         decoration: InputDecoration(
                             hintText: 'Enter Id of the reciver'),
-                        onChanged: (reciverId) {
+                        onChanged: (channelId) {
                           setState(() {
-                            _peerId = reciverId ?? "null";
+                            this.channelId=channelId;
                           });
                         },
                       ),
                       IconButton(
-                        icon: const Icon(Icons.call),
+                        icon: const Icon(Icons.add),
                         onPressed: () {
-                          media = 'audio';
-                          _invitePeer(context, _peerId, media);
+                          // media = 'audio';
+                          _webRtcClient.invitPeer();
+                        },
+
+                        tooltip: 'invite',
+                      ),
+                        SizedBox(height: 20,width: 20,),
+                        IconButton(
+                        icon: const Icon(Icons.check),
+                        onPressed: () {
+                         
+                          _webRtcClient.join();
 
                         },
-                        tooltip: 'Audio calling',
+                        tooltip: 'join ',
                       ),
-                    ],
+                   
+                   Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: <Widget>[
+                      FloatingActionButton(
+                        onPressed:(){
+                           _webRtcClient.leave();
+                        },
+                        tooltip: 'Hangup',
+                        child: Icon(Icons.call_end),
+                        backgroundColor: Colors.pink,
+                      ),
+                      FloatingActionButton(
+                        child: Icon(mute ? Icons.mic_off : Icons.mic),
+                        onPressed: () {
+                           _webRtcClient.toggleMic(mute);
+                          setState(() {
+                            mute = !mute;
+                          });
+                         
+                        },
+                      ),
+                      FloatingActionButton(
+                        child: Icon(
+                            isSpeaker ? Icons.volume_up : Icons.volume_down),
+                        tooltip: 'Speaker',
+                        onPressed: () {
+                       _webRtcClient.toggleSpeaker(isSpeaker);
+                          setState(() {
+                            isSpeaker = !isSpeaker;
+                          });
+                        },
+                      ),
+                       
+                    ]) ],
                   ),
                 ),
               ));
