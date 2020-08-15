@@ -18,12 +18,12 @@ class CallSample extends StatefulWidget {
 
 class _CallSampleState extends State<CallSample> {
   // Signaling _signaling;
-  String _selfId = "1";
-  String _peerId = "2";
-   String channelId="123";
+  String _selfId = "2";
+  String _peerId = "1";
+  String channelId = "123";
   // RTCVideoRenderer _localRenderer = RTCVideoRenderer();
   // RTCVideoRenderer _remoteRenderer = RTCVideoRenderer();
-  
+
   String media;
   bool _inCalling = false;
   bool isSpeaker = true;
@@ -36,11 +36,10 @@ class _CallSampleState extends State<CallSample> {
   @override
   initState() {
     super.initState();
-       _webRtcClient = WebRtcClient(channelId, peerId: _peerId, selfId: _selfId);
+    _webRtcClient = WebRtcClient(channelId, peerId: _peerId, selfId: _selfId);
 
     // initRenderers();
     // _connect();
-
   }
 
   // initRenderers() async {
@@ -66,8 +65,7 @@ class _CallSampleState extends State<CallSample> {
   //           this.setState(() {
   //             _inCalling = true;
   //           });
-         
-            
+
   //           break;
   //         case SignalingState.CallStateBye:
   //           this.setState(() {
@@ -81,7 +79,7 @@ class _CallSampleState extends State<CallSample> {
   //         case SignalingState.CallStateConnected:
   //         break;
   //         case SignalingState.CallStateRinging:
-        
+
   //         break;
   //         case SignalingState.ConnectionClosed:
   //         case SignalingState.ConnectionError:
@@ -157,8 +155,8 @@ class _CallSampleState extends State<CallSample> {
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: <Widget>[
                       FloatingActionButton(
-                        onPressed:(){
-                           _webRtcClient.leave();
+                        onPressed: () {
+                          _webRtcClient.leave();
                         },
                         tooltip: 'Hangup',
                         child: Icon(Icons.call_end),
@@ -167,11 +165,10 @@ class _CallSampleState extends State<CallSample> {
                       FloatingActionButton(
                         child: Icon(mute ? Icons.mic_off : Icons.mic),
                         onPressed: () {
-                           _webRtcClient.toggleMic(mute);
+                          _webRtcClient.toggleMic(mute);
                           setState(() {
                             mute = !mute;
                           });
-                         
                         },
                       ),
                       FloatingActionButton(
@@ -179,13 +176,12 @@ class _CallSampleState extends State<CallSample> {
                             isSpeaker ? Icons.volume_up : Icons.volume_down),
                         tooltip: 'Speaker',
                         onPressed: () {
-                       _webRtcClient.toggleSpeaker(isSpeaker);
+                          _webRtcClient.toggleSpeaker(isSpeaker);
                           setState(() {
                             isSpeaker = !isSpeaker;
                           });
                         },
                       ),
-                       
                     ]))
             : null,
         body: _inCalling
@@ -205,7 +201,7 @@ class _CallSampleState extends State<CallSample> {
                             hintText: 'Enter Id of the reciver'),
                         onChanged: (channelId) {
                           setState(() {
-                            this.channelId=channelId;
+                            this.channelId = channelId;
                           });
                         },
                       ),
@@ -215,54 +211,53 @@ class _CallSampleState extends State<CallSample> {
                           // media = 'audio';
                           _webRtcClient.invitPeer();
                         },
-
                         tooltip: 'invite',
                       ),
-                        SizedBox(height: 20,width: 20,),
-                        IconButton(
+                      SizedBox(
+                        height: 20,
+                        width: 20,
+                      ),
+                      IconButton(
                         icon: const Icon(Icons.check),
                         onPressed: () {
-                         
                           _webRtcClient.join();
-
                         },
                         tooltip: 'join ',
                       ),
-                   
-                   Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: <Widget>[
-                      FloatingActionButton(
-                        onPressed:(){
-                           _webRtcClient.leave();
-                        },
-                        tooltip: 'Hangup',
-                        child: Icon(Icons.call_end),
-                        backgroundColor: Colors.pink,
-                      ),
-                      FloatingActionButton(
-                        child: Icon(mute ? Icons.mic_off : Icons.mic),
-                        onPressed: () {
-                           _webRtcClient.toggleMic(mute);
-                          setState(() {
-                            mute = !mute;
-                          });
-                         
-                        },
-                      ),
-                      FloatingActionButton(
-                        child: Icon(
-                            isSpeaker ? Icons.volume_up : Icons.volume_down),
-                        tooltip: 'Speaker',
-                        onPressed: () {
-                       _webRtcClient.toggleSpeaker(isSpeaker);
-                          setState(() {
-                            isSpeaker = !isSpeaker;
-                          });
-                        },
-                      ),
-                       
-                    ]) ],
+                      Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: <Widget>[
+                            FloatingActionButton(
+                              onPressed: () {
+                                _webRtcClient.leave();
+                              },
+                              tooltip: 'Hangup',
+                              child: Icon(Icons.call_end),
+                              backgroundColor: Colors.pink,
+                            ),
+                            FloatingActionButton(
+                              child: Icon(mute ? Icons.mic_off : Icons.mic),
+                              onPressed: () {
+                                _webRtcClient.toggleMic(mute);
+                                setState(() {
+                                  mute = !mute;
+                                });
+                              },
+                            ),
+                            FloatingActionButton(
+                              child: Icon(isSpeaker
+                                  ? Icons.volume_up
+                                  : Icons.volume_down),
+                              tooltip: 'Speaker',
+                              onPressed: () {
+                                _webRtcClient.toggleSpeaker(isSpeaker);
+                                setState(() {
+                                  isSpeaker = !isSpeaker;
+                                });
+                              },
+                            ),
+                          ])
+                    ],
                   ),
                 ),
               ));

@@ -25,7 +25,6 @@ typedef void DataChannelMessageCallback(
 typedef void DataChannelCallback(RTCDataChannel dc);
 
 class Signaling {
-
   Signaling(this._selfId, this._sessionId);
 
   JsonEncoder _encoder = new JsonEncoder();
@@ -33,7 +32,7 @@ class Signaling {
   String _selfId;
 
   // SimpleWebSocket _socket;
-  var _sessionId="123";
+  var _sessionId = "123";
   var _host;
   var _port = 8086;
   var _peerConnections = new Map<String, RTCPeerConnection>();
@@ -41,7 +40,7 @@ class Signaling {
   var _remoteCandidates = [];
   var _turnCredential;
   List<int> ids = [];
-  
+  var offerPassed = false;
   MediaStream _localStream;
   List<MediaStream> _remoteStreams;
   SignalingStateCallback onStateChange;
@@ -99,8 +98,6 @@ class Signaling {
   //   'optional': [],
   // };
 
-
-
   close() {
     if (_localStream != null) {
       _localStream.dispose();
@@ -110,7 +107,7 @@ class Signaling {
     _peerConnections.forEach((key, pc) {
       pc.close();
     });
-    
+
     //  if (_socket != null) _socket.close();
   }
 
@@ -126,9 +123,10 @@ class Signaling {
       _localStream.getAudioTracks()[0].setMicrophoneMute(mute);
     }
   }
-    void speakerMute(double v) {
+
+  void speakerMute(double v) {
     if (_localStream != null) {
-      _localStream.getAudioTracks()[0].enabled = (v!=0);
+      _localStream.getAudioTracks()[0].enabled = (v != 0);
     }
   }
 
@@ -221,18 +219,18 @@ class Signaling {
       case 'offer':
         {
           var id = data['from'];
-         var description = data['description'];
+          var description = data['description'];
           var media = data['media'];
-           var sessionId = data['session_id'];
-           this._sessionId = sessionId;
+          var sessionId = data['session_id'];
+          this._sessionId = sessionId;
 
           // if (this.onStateChange != null) {
           //   this.onStateChange(SignalingState.CallStateNew);
           // }
-                _createPeerConnection(id, media).then((pc) {
+          _createPeerConnection(id, media).then((pc) {
             _peerConnections[id] = pc;
-            pc.setRemoteDescription(
-                new RTCSessionDescription(description['sdp'], description['type']));
+            pc.setRemoteDescription(new RTCSessionDescription(
+                description['sdp'], description['type']));
             _createAnswer(id, pc, media);
             if (this._remoteCandidates.length > 0) {
               _remoteCandidates.forEach((candidate) async {
@@ -408,17 +406,24 @@ class Signaling {
     }
 """;
 
-    Snapshot snapshot =
-        hasuraConnect.subscription(docQuery, variables: {"selfId": _selfId , "cid":"123"});
-    snapshot.listen((data)  {
-      print("recived data:" +  _selfId.toString() + " " + _sessionId.toString());
+    Snapshot snapshot = hasuraConnect
+        .subscription(docQuery, variables: {"selfId": _selfId, "cid": "123"});
+    snapshot.listen((data) {
+      print("recived data:" + _selfId.toString() + " " + _sessionId.toString());
 
       List<dynamic> dataa = data["data"]["call_signaling_beta"];
-      dataa.forEach((element){
+      dataa.forEach((element) {
         print(element["data"]);
-        this.onMessage(element["data"]);
-         }
-      );
+
+        if (element["data"]["type"] == "offer" && !offerPassed) {
+          this.onMessage(element["data"]);
+          offerPassed = true;
+        } else {
+          if (element["data"]["type"] != "offer")
+            this.onMessage(element["data"]);
+          if (element["data"]["type"] == "bye") offerPassed = false;
+        }
+      });
     }).onError((err) {
       print(err);
     });
@@ -550,11 +555,8 @@ mutation MyMutation($cby:String!,$request:jsonb!,$cid:String!) {
   }
 }
 """;
-    var r = await hasuraConnect.mutation(docQuery, variables: {
-      "cby": cby,
-      "request": request,
-      "cid": data["session_id"]
-    });
+    var r = await hasuraConnect.mutation(docQuery,
+        variables: {"cby": cby, "request": request, "cid": data["session_id"]});
     print("send data:");
     print(r);
     //  _socket.send(_encoder.convert(request));
